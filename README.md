@@ -1,6 +1,6 @@
 # PDF Redactor
 
-A simple application to redact/censor information in PDF files using a black highlighter.
+A pdf viewer to redact/censor information in PDF files using a black highlighter.
 
 ## Features
 
@@ -42,26 +42,7 @@ uv run python src/redact_pdf/main.py
 ```
 
 ### How to redact a PDF
-
-1. **Open a PDF**:
-   - Click `File > Open PDF...` or press `Ctrl+O`
-   - Select the PDF file you want to edit
-
-2. **Draw redactions**:
-   - Click and drag the mouse over the area you want to redact
-   - A red temporary rectangle will appear while dragging
-   - When you release the mouse, a permanent black rectangle will be created
-   - You can add multiple redactions
-
-3. **Zoom** (optional):
-   - `Ctrl++` or `View > Zoom In`: Zoom in
-   - `Ctrl+-` or `View > Zoom Out`: Zoom out
-   - `Ctrl+0` or `View > Fit to Window`: Fit to window
-
-4. **Save the redacted PDF**:
-   - Click `File > Save As...` or press `Ctrl+S`
-   - Select where to save the file
-   - The redacted PDF will be saved (redactions are irreversible)
+Use the mouse to draw a rectangle over the data you want to redact. Then, save the document.
 
 ### Keyboard shortcuts
 
@@ -101,6 +82,7 @@ redact-pdf/
 
 ## Limitations (MVP)
 
+- The document is visualized pixelated
 - Only shows the first page of the PDF
 - No undo/redo functionality
 - No preview before saving

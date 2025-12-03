@@ -2,7 +2,7 @@
 
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsRectItem, QGraphicsPixmapItem
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRectF
-from PyQt6.QtGui import QPixmap, QImage, QPen, QBrush, QColor, QCursor, QMouseEvent
+from PyQt6.QtGui import QPixmap, QImage, QPen, QBrush, QColor, QCursor, QMouseEvent, QPainter
 
 
 class PDFViewerScene(QGraphicsScene):
@@ -52,10 +52,18 @@ class PDFViewer(QGraphicsView):
         # Zoom
         self.zoom_factor: float = 1.0
 
-        # View settings
-        self.setRenderHint(self.renderHints())
+        # View settings - enable high quality rendering
+        self.setRenderHints(
+            QPainter.RenderHint.Antialiasing |
+            QPainter.RenderHint.SmoothPixmapTransform |
+            QPainter.RenderHint.TextAntialiasing
+        )
         self.setDragMode(QGraphicsView.DragMode.NoDrag)
         self.setCursor(QCursor(Qt.CursorShape.CrossCursor))
+
+        # Enable scrollbars for large documents
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
         # Enable mouse tracking
         self.setMouseTracking(True)
@@ -78,9 +86,12 @@ class PDFViewer(QGraphicsView):
         # Store page size for coordinate conversion
         self.page_size = page_size
 
-        # Fit the view to the pixmap
+        # Set scene rect to pixmap bounds
         self.setSceneRect(self.pixmap_item.boundingRect())
-        self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
+
+        # Reset transform to show image at native resolution (no scaling)
+        self.resetTransform()
+        self.zoom_factor = 1.0
 
     def clear_page(self) -> None:
         """Clear all items from the scene."""

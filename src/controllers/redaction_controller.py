@@ -18,7 +18,7 @@ class RedactionController:
     def __init__(self):
         """Initialize the controller."""
         self.pdf_model = PDFDocument()
-        self.current_zoom = 1.0
+        self.current_zoom = 1.5
         self.current_page_num = 0
 
     def open_pdf(self, file_path: str) -> tuple[bool, str]:

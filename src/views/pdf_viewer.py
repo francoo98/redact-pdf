@@ -1,8 +1,8 @@
 """PDF Viewer widget with redaction drawing capabilities."""
 
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsRectItem, QGraphicsPixmapItem
-from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRectF
-from PyQt6.QtGui import QPixmap, QImage, QPen, QBrush, QColor, QCursor, QMouseEvent, QPainter
+from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRectF, QTimer
+from PyQt6.QtGui import QPixmap, QImage, QPen, QBrush, QColor, QCursor, QMouseEvent, QPainter, QWheelEvent
 
 
 class PDFViewerScene(QGraphicsScene):
@@ -29,9 +29,13 @@ class PDFViewer(QGraphicsView):
     Signals:
         redaction_added: Emitted when user completes drawing a redaction rectangle
                         Parameters: (QRectF rect, tuple page_size)
+        next_page_requested: Emitted when user scrolls past the bottom
+        previous_page_requested: Emitted when user scrolls past the top
     """
 
     redaction_added = pyqtSignal(QRectF, tuple)  # rect, page_size
+    next_page_requested = pyqtSignal()
+    previous_page_requested = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -160,6 +164,28 @@ class PDFViewer(QGraphicsView):
 
         super().mouseReleaseEvent(event)
 
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        """Handle mouse wheel events for page navigation."""
+        # Get vertical scrollbar
+        vbar = self.verticalScrollBar()
+
+        # Check if scrolling down and at bottom
+        if event.angleDelta().y() < 0:  # Scrolling down
+            if vbar.value() >= vbar.maximum() - 10:  # Near bottom (with small threshold)
+                # Request next page
+                self.next_page_requested.emit()
+                return  # Don't process scroll
+
+        # Check if scrolling up and at top
+        elif event.angleDelta().y() > 0:  # Scrolling up
+            if vbar.value() <= vbar.minimum() + 10:  # Near top (with small threshold)
+                # Request previous page
+                self.previous_page_requested.emit()
+                return  # Don't process scroll
+
+        # Normal scroll behavior
+        super().wheelEvent(event)
+
     def zoom_in(self) -> None:
         """Zoom in the view."""
         self.zoom_factor *= 1.25
@@ -176,3 +202,11 @@ class PDFViewer(QGraphicsView):
             self.resetTransform()
             self.zoom_factor = 1.0
             self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
+
+    def scroll_to_top(self) -> None:
+        """Scroll to the top of the page."""
+        self.verticalScrollBar().setValue(0)
+
+    def scroll_to_bottom(self) -> None:
+        """Scroll to the bottom of the page."""
+        self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())

@@ -123,3 +123,55 @@ class RedactionController:
     def get_page_count(self) -> int:
         """Get the total number of pages in the PDF."""
         return self.pdf_model.get_page_count()
+
+    def get_current_page_number(self) -> int:
+        """Get the current page number (0-indexed)."""
+        return self.current_page_num
+
+    def go_to_page(self, page_num: int) -> tuple[QImage | None, tuple[float, float]]:
+        """
+        Navigate to a specific page.
+
+        Args:
+            page_num: Page number to navigate to (0-indexed)
+
+        Returns:
+            Tuple of (QImage, (page_width, page_height))
+        """
+        page_count = self.get_page_count()
+        if 0 <= page_num < page_count:
+            self.current_page_num = page_num
+            return self.get_current_page_image()
+        return None, (0.0, 0.0)
+
+    def next_page(self) -> tuple[QImage | None, tuple[float, float]]:
+        """
+        Navigate to the next page.
+
+        Returns:
+            Tuple of (QImage, (page_width, page_height))
+        """
+        if self.current_page_num < self.get_page_count() - 1:
+            self.current_page_num += 1
+            return self.get_current_page_image()
+        return None, (0.0, 0.0)
+
+    def previous_page(self) -> tuple[QImage | None, tuple[float, float]]:
+        """
+        Navigate to the previous page.
+
+        Returns:
+            Tuple of (QImage, (page_width, page_height))
+        """
+        if self.current_page_num > 0:
+            self.current_page_num -= 1
+            return self.get_current_page_image()
+        return None, (0.0, 0.0)
+
+    def has_next_page(self) -> bool:
+        """Check if there is a next page."""
+        return self.current_page_num < self.get_page_count() - 1
+
+    def has_previous_page(self) -> bool:
+        """Check if there is a previous page."""
+        return self.current_page_num > 0

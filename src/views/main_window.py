@@ -1,9 +1,9 @@
 """Main application window."""
 
 from PyQt6.QtWidgets import (
-    QMainWindow, QFileDialog, QToolBar, QStatusBar, QMessageBox
+    QMainWindow, QFileDialog, QToolBar, QStatusBar, QMessageBox, QLabel, QWidget, QSpinBox
 )
-from PyQt6.QtCore import QRectF
+from PyQt6.QtCore import QRectF, Qt
 from PyQt6.QtGui import QAction, QKeySequence
 
 from views.pdf_viewer import PDFViewer
@@ -103,6 +103,16 @@ class MainWindow(QMainWindow):
         toolbar.addAction(self.open_action)
         toolbar.addAction(self.save_action)
         toolbar.addSeparator()
+
+        # Page indicator label
+        self.page_label = QLabel("No PDF loaded")
+        self.page_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.page_label.setMinimumWidth(150)
+        toolbar.addWidget(self.page_label)
+
+        toolbar.addSeparator()
+
+        # Zoom controls
         toolbar.addAction(self.zoom_in_action)
         toolbar.addAction(self.zoom_out_action)
         toolbar.addAction(self.reset_zoom_action)
@@ -117,6 +127,10 @@ class MainWindow(QMainWindow):
         """Connect signals and slots between components."""
         # Connect PDF viewer redaction signal to controller
         self.pdf_viewer.redaction_added.connect(self.on_redaction_added)
+
+        # Connect page navigation signals
+        self.pdf_viewer.next_page_requested.connect(self.next_page)
+        self.pdf_viewer.previous_page_requested.connect(self.previous_page)
 
     def open_pdf_dialog(self) -> None:
         """Open file dialog to select a PDF file."""
@@ -224,6 +238,39 @@ class MainWindow(QMainWindow):
         self.zoom_in_action.setEnabled(pdf_is_open)
         self.zoom_out_action.setEnabled(pdf_is_open)
         self.reset_zoom_action.setEnabled(pdf_is_open)
+
+        # Update page label
+        if pdf_is_open:
+            self.update_page_label()
+        else:
+            self.page_label.setText("No PDF loaded")
+
+    def update_page_label(self) -> None:
+        """Update the page indicator label."""
+        if self.controller.is_pdf_open():
+            current = self.controller.get_current_page_number() + 1  # Convert to 1-indexed
+            total = self.controller.get_page_count()
+            self.page_label.setText(f"Page {current} of {total}")
+
+    def previous_page(self) -> None:
+        """Navigate to the previous page."""
+        qimage, page_size = self.controller.previous_page()
+        if qimage:
+            self.pdf_viewer.set_page_image(qimage, page_size)
+            self.pdf_viewer.scroll_to_top()  # Reset scroll to top of page
+            self.update_window_state()
+            current = self.controller.get_current_page_number() + 1
+            self.status_bar.showMessage(f"Page {current}")
+
+    def next_page(self) -> None:
+        """Navigate to the next page."""
+        qimage, page_size = self.controller.next_page()
+        if qimage:
+            self.pdf_viewer.set_page_image(qimage, page_size)
+            self.pdf_viewer.scroll_to_top()  # Reset scroll to top of page
+            self.update_window_state()
+            current = self.controller.get_current_page_number() + 1
+            self.status_bar.showMessage(f"Page {current}")
 
     def show_error(self, message: str) -> None:
         """
